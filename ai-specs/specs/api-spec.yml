@@ -1,0 +1,274 @@
+openapi: 3.0.3
+info:
+  title: Companies API
+  version: 0.1.0
+  description: REST API for company management
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+paths:
+  /api/v1/companies:
+    get:
+      summary: List companies
+      tags: [companies]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Case-insensitive partial match on company name
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            default: name
+          description: Column to sort by (name, city, state, country, billing, expenses, employees, clients, created_at)
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+      responses:
+        "200":
+          description: Paginated list of companies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedCompanyResponse"
+
+    post:
+      summary: Create a company
+      tags: [companies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCompanyRequest"
+      responses:
+        "201":
+          description: Company created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyResponse"
+        "422":
+          description: Validation error
+
+  /api/v1/companies/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    get:
+      summary: Get a company by ID
+      tags: [companies]
+      responses:
+        "200":
+          description: Company details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyResponse"
+        "404":
+          description: Company not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      summary: Update a company
+      tags: [companies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCompanyRequest"
+      responses:
+        "200":
+          description: Company updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyResponse"
+        "404":
+          description: Company not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      summary: Delete a company
+      tags: [companies]
+      responses:
+        "204":
+          description: Company deleted
+        "404":
+          description: Company not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    CreateCompanyRequest:
+      type: object
+      required: [name, street, city, state, zip_code, country]
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        street:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 100
+        zip_code:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 100
+        billing:
+          type: number
+          format: decimal
+          default: 0
+        expenses:
+          type: number
+          format: decimal
+          default: 0
+        employees:
+          type: integer
+          default: 0
+        clients:
+          type: integer
+          default: 0
+
+    UpdateCompanyRequest:
+      type: object
+      required: [name, street, city, state, zip_code, country]
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        street:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 100
+        zip_code:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 100
+        billing:
+          type: number
+          format: decimal
+          default: 0
+        expenses:
+          type: number
+          format: decimal
+          default: 0
+        employees:
+          type: integer
+          default: 0
+        clients:
+          type: integer
+          default: 0
+
+    CompanyResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip_code:
+          type: string
+        country:
+          type: string
+        billing:
+          type: number
+          format: decimal
+        expenses:
+          type: number
+          format: decimal
+        profit:
+          type: number
+          format: decimal
+          description: Computed as billing - expenses
+        employees:
+          type: integer
+        clients:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PaginatedCompanyResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompanyResponse"
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total_pages:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            code:
+              type: string

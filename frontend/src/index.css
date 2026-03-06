@@ -1,0 +1,397 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+:root {
+    --color-primary: #5a6745;
+    --color-primary-hover: #4d5a3b;
+    --color-bg-sidebar: #fafafa;
+    --color-bg-input: #f3f3f5;
+    --color-bg-profit: #f5f7f3;
+    --color-bg-table-header: rgba(236, 236, 240, 0.5);
+    --color-text-primary: #0a0a0a;
+    --color-text-secondary: #717182;
+    --color-text-placeholder: rgba(10, 10, 10, 0.5);
+    --color-text-required: #d4183d;
+    --color-text-profit: #5a6745;
+    --color-border: rgba(0, 0, 0, 0.1);
+    --border-radius: 10px;
+    --font-family: 'Inter', sans-serif;
+}
+
+body {
+    font-family: var(--font-family);
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+/* Layout */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.app-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 255px;
+    background: var(--color-bg-sidebar);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.2s ease;
+}
+
+.sidebar.collapsed {
+    width: 60px;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 64px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.sidebar-logo-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--color-primary);
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.sidebar-logo-text {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--color-text-primary);
+}
+
+.sidebar.collapsed .sidebar-logo-text,
+.sidebar.collapsed .sidebar-nav-text {
+    display: none;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+    color: var(--color-text-primary);
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+}
+
+.sidebar-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    color: var(--color-text-primary);
+    font-size: 16px;
+    line-height: 24px;
+    transition: background 0.15s;
+}
+
+.sidebar-nav-link:hover {
+    background: rgba(90, 103, 69, 0.1);
+    color: var(--color-text-primary);
+}
+
+.sidebar-nav-link.active {
+    background: var(--color-primary);
+    color: white;
+}
+
+/* Companies Page */
+.companies-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32px;
+    padding-bottom: 0;
+}
+
+.companies-title {
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.companies-subtitle {
+    font-size: 16px;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.btn-primary-custom {
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--border-radius);
+    color: white;
+    font-weight: 500;
+    font-size: 16px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary-custom:hover {
+    background: var(--color-primary-hover);
+    color: white;
+}
+
+.companies-search {
+    padding: 32px;
+    padding-top: 24px;
+    padding-bottom: 16px;
+}
+
+.search-input {
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: 10px 16px 10px 40px;
+    font-size: 16px;
+    max-width: 448px;
+    width: 100%;
+}
+
+.search-input::placeholder {
+    color: var(--color-text-placeholder);
+}
+
+.search-wrapper {
+    position: relative;
+    max-width: 448px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-secondary);
+}
+
+/* Table */
+.companies-table-wrapper {
+    margin: 0 32px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.companies-table {
+    margin: 0;
+}
+
+.companies-table thead {
+    background: var(--color-bg-table-header);
+}
+
+.companies-table thead th {
+    font-weight: 500;
+    font-size: 16px;
+    color: var(--color-text-primary);
+    border-bottom: none;
+    padding: 12px 24px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.companies-table tbody td {
+    font-size: 16px;
+    padding: 20px 24px;
+    vertical-align: middle;
+    border-color: var(--color-border);
+}
+
+.col-address {
+    color: var(--color-text-secondary);
+}
+
+.col-profit {
+    color: var(--color-text-profit);
+}
+
+.col-numeric {
+    text-align: right;
+}
+
+.col-actions {
+    text-align: right;
+}
+
+.sort-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    font-size: 16px;
+    color: var(--color-text-primary);
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+}
+
+.action-btn:hover {
+    background: var(--color-bg-input);
+}
+
+.action-btn-delete:hover {
+    color: var(--color-text-required);
+}
+
+.companies-footer {
+    padding: 16px 32px;
+    color: var(--color-text-secondary);
+    font-size: 16px;
+}
+
+/* Modal / Form */
+.company-modal .modal-content {
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-border);
+}
+
+.company-modal .modal-header {
+    padding: 24px;
+    border-color: var(--color-border);
+}
+
+.company-modal .modal-title {
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.company-modal .modal-body {
+    padding: 24px;
+}
+
+.company-form .form-section-title {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+.company-form .form-label {
+    font-weight: 500;
+    font-size: 16px;
+}
+
+.company-form .required-asterisk {
+    color: var(--color-text-required);
+}
+
+.company-form .form-control {
+    background: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: 10px 16px;
+    font-size: 16px;
+}
+
+.company-form .form-control::placeholder {
+    color: var(--color-text-placeholder);
+}
+
+.profit-display {
+    background: var(--color-bg-profit);
+    border-radius: var(--border-radius);
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.profit-label {
+    color: var(--color-text-secondary);
+    font-size: 16px;
+}
+
+.profit-value {
+    color: var(--color-text-profit);
+    font-size: 16px;
+}
+
+.company-modal .modal-footer {
+    padding: 16px 24px;
+    border-color: var(--color-border);
+    gap: 12px;
+}
+
+.btn-cancel {
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    font-size: 16px;
+    color: var(--color-text-primary);
+    padding: 10px 24px;
+}
+
+.btn-cancel:hover {
+    background: var(--color-bg-input);
+    color: var(--color-text-primary);
+}
+
+/* Bulk delete */
+.btn-delete-selected {
+    background: var(--color-text-required);
+    border: none;
+    border-radius: var(--border-radius);
+    color: white;
+    font-weight: 500;
+    font-size: 16px;
+    padding: 10px 16px;
+}
+
+.btn-delete-selected:hover {
+    background: #b81535;
+    color: white;
+}
+
+/* Pagination */
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 32px;
+}
