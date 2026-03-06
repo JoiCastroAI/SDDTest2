@@ -1,0 +1,843 @@
+---
+description: Backend development standards, best practices, and conventions for the Python/FastAPI application including Clean Architecture, SOLID principles, API design, and testing practices
+globs: ["backend/src/**/*.py", "backend/alembic/**/*.py", "backend/tests/**/*.py", "backend/pyproject.toml", "backend/alembic.ini", "backend/Dockerfile"]
+alwaysApply: true
+---
+
+# Backend Project Standards and Best Practices
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Technology Stack](#technology-stack)
+  - [Core Technologies](#core-technologies)
+  - [Database & ORM](#database--orm)
+  - [Testing Framework](#testing-framework)
+  - [Development Tools](#development-tools)
+- [Architecture Overview](#architecture-overview)
+  - [Clean Architecture](#clean-architecture)
+  - [Layered Architecture](#layered-architecture)
+  - [Project Structure](#project-structure)
+- [Clean Architecture Principles](#clean-architecture-principles)
+  - [Entities](#entities)
+  - [Use Cases](#use-cases)
+  - [Repositories](#repositories)
+  - [Dependency Rule](#dependency-rule)
+- [SOLID and DRY Principles](#solid-and-dry-principles)
+  - [Single Responsibility Principle (SRP)](#single-responsibility-principle-srp)
+  - [Open/Closed Principle (OCP)](#openclosed-principle-ocp)
+  - [Liskov Substitution Principle (LSP)](#liskov-substitution-principle-lsp)
+  - [Interface Segregation Principle (ISP)](#interface-segregation-principle-isp)
+  - [Dependency Inversion Principle (DIP)](#dependency-inversion-principle-dip)
+  - [DRY (Don't Repeat Yourself)](#dry-dont-repeat-yourself)
+- [Coding Standards](#coding-standards)
+  - [Language and Naming Conventions](#language-and-naming-conventions)
+  - [Python and Type Hints](#python-and-type-hints)
+  - [Error Handling](#error-handling)
+  - [Validation Patterns](#validation-patterns)
+  - [Logging Standards](#logging-standards)
+- [API Design Standards](#api-design-standards)
+  - [REST Endpoints](#rest-endpoints)
+  - [Request/Response Patterns](#requestresponse-patterns)
+  - [Error Response Format](#error-response-format)
+  - [Versioning](#versioning)
+  - [CORS Configuration](#cors-configuration)
+- [Database Patterns](#database-patterns)
+  - [SQLAlchemy Models](#sqlalchemy-models)
+  - [Migrations](#migrations)
+  - [Repository Pattern](#repository-pattern)
+- [Testing Standards](#testing-standards)
+  - [Unit Testing](#unit-testing)
+  - [Integration Testing](#integration-testing)
+  - [Test Coverage Requirements](#test-coverage-requirements)
+  - [Mocking Standards](#mocking-standards)
+- [Performance Best Practices](#performance-best-practices)
+  - [Database Query Optimization](#database-query-optimization)
+  - [Async Patterns](#async-patterns)
+  - [Error Handling Performance](#error-handling-performance)
+- [Security Best Practices](#security-best-practices)
+  - [Input Validation](#input-validation)
+  - [Authentication (OAuth)](#authentication-oauth)
+  - [Environment Variables](#environment-variables)
+  - [Dependency Injection](#dependency-injection)
+- [Development Workflow](#development-workflow)
+  - [Git Workflow](#git-workflow)
+  - [Development Scripts](#development-scripts)
+  - [Code Quality](#code-quality)
+- [Docker Deployment](#docker-deployment)
+
+---
+
+## Overview
+
+This document defines the standards and conventions for the backend application. The backend uses Python with FastAPI, follows Clean Architecture principles, and uses Pydantic for validation, SQLAlchemy for data access, and OAuth for authentication.
+
+## Technology Stack
+
+### Core Technologies
+- **Python 3.11+**: Runtime language
+- **FastAPI**: Async web framework with automatic OpenAPI docs
+- **Pydantic v2**: Data validation and serialization
+- **UV/pip**: Dependency management
+
+### Database & ORM
+- **PostgreSQL**: Relational database
+- **SQLAlchemy 2.0+**: ORM with async support
+- **Alembic**: Database migration tool
+
+### Testing Framework
+- **Pytest**: Unit and integration testing with async support
+- **pytest-asyncio**: Async test support
+- **Coverage threshold**: 90% for branches, functions, lines, and statements
+
+### Development Tools
+- **Ruff**: Linting and formatting (replaces flake8/black/isort)
+- **mypy**: Static type checking
+- **Docker**: Containerized development and deployment
+- **GitHub Actions**: CI/CD pipeline
+
+## Architecture Overview
+
+### Clean Architecture
+
+The backend follows Clean Architecture to keep business logic independent of frameworks, databases, and external services. Dependencies always point inward.
+
+**Benefits:**
+- **Testability**: Business logic is testable without infrastructure
+- **Flexibility**: Swap frameworks, databases, or external services without touching core logic
+- **Maintainability**: Clear boundaries make the system easier to reason about
+
+### Layered Architecture
+
+**Domain Layer** (`src/domain/`)
+- Entities define core business objects
+- Repository interfaces (abstract base classes) define data access contracts
+- Pure business logic with zero external dependencies
+
+**Application Layer** (`src/application/`)
+- Use cases orchestrate business operations
+- Each use case is a single class with an `execute` method
+- Depends only on domain layer abstractions
+
+**Infrastructure Layer** (`src/infrastructure/`)
+- SQLAlchemy repository implementations
+- Database session management
+- External service integrations
+- OAuth provider implementations
+
+**Presentation Layer** (`src/presentation/`)
+- FastAPI routers handle HTTP requests/responses
+- Pydantic schemas define request/response models
+- Dependency injection wiring via FastAPI `Depends`
+
+### Project Structure
+
+```
+backend/
+├── src/
+│   ├── domain/
+│   │   ├── entities/          # Domain entities (plain Python classes)
+│   │   ├── repositories/     # Abstract repository interfaces (ABCs)
+│   │   ├── services/         # Domain services (pure business logic)
+│   │   └── exceptions.py     # Domain-specific exceptions
+│   ├── application/
+│   │   ├── use_cases/        # Application use cases
+│   │   └── dtos/             # Data transfer objects (Pydantic)
+│   ├── infrastructure/
+│   │   ├── database/
+│   │   │   ├── models/       # SQLAlchemy ORM models
+│   │   │   ├── repositories/ # Repository implementations
+│   │   │   └── session.py    # Database session factory
+│   │   ├── auth/             # OAuth provider integration
+│   │   └── config.py         # Application configuration
+│   ├── presentation/
+│   │   ├── routers/          # FastAPI route handlers
+│   │   ├── schemas/          # Pydantic request/response schemas
+│   │   ├── dependencies.py   # FastAPI dependency injection
+│   │   └── middleware.py     # Custom middleware
+│   └── main.py               # FastAPI app factory
+├── alembic/
+│   ├── versions/             # Migration files
+│   └── env.py                # Alembic environment config
+├── tests/
+│   ├── unit/                 # Unit tests
+│   ├── integration/          # Integration tests
+│   ├── conftest.py           # Shared fixtures
+│   └── factories.py          # Test data factories
+├── pyproject.toml            # Project config and dependencies
+├── alembic.ini               # Alembic configuration
+├── Dockerfile                # Container definition
+└── docker-compose.yml        # Local development services
+```
+
+## Clean Architecture Principles
+
+### Entities
+
+Entities are plain Python classes representing core business objects. They contain business rules and are independent of any framework.
+
+```python
+from dataclasses import dataclass, field
+from datetime import datetime
+
+
+@dataclass
+class Candidate:
+    first_name: str
+    last_name: str
+    email: str
+    id: int | None = None
+    created_at: datetime = field(default_factory=datetime.utcnow)
+
+    @property
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
+
+    def validate_email(self) -> None:
+        if "@" not in self.email:
+            raise ValueError("Invalid email address")
+```
+
+### Use Cases
+
+Each use case represents a single application operation. It receives dependencies through its constructor and exposes a single `execute` method.
+
+```python
+from src.domain.repositories.candidate_repository import CandidateRepository
+from src.domain.entities.candidate import Candidate
+
+
+class CreateCandidateUseCase:
+    def __init__(self, candidate_repo: CandidateRepository) -> None:
+        self._candidate_repo = candidate_repo
+
+    async def execute(self, candidate: Candidate) -> Candidate:
+        candidate.validate_email()
+        existing = await self._candidate_repo.find_by_email(candidate.email)
+        if existing:
+            raise ValueError("Candidate with this email already exists")
+        return await self._candidate_repo.save(candidate)
+```
+
+### Repositories
+
+Repository interfaces are defined as abstract base classes in the domain layer. Implementations live in the infrastructure layer.
+
+```python
+from abc import ABC, abstractmethod
+from src.domain.entities.candidate import Candidate
+
+
+class CandidateRepository(ABC):
+    @abstractmethod
+    async def find_by_id(self, candidate_id: int) -> Candidate | None: ...
+
+    @abstractmethod
+    async def find_by_email(self, email: str) -> Candidate | None: ...
+
+    @abstractmethod
+    async def save(self, candidate: Candidate) -> Candidate: ...
+
+    @abstractmethod
+    async def find_all(self) -> list[Candidate]: ...
+```
+
+### Dependency Rule
+
+Dependencies always point inward:
+- **Domain** depends on nothing
+- **Application** depends only on Domain
+- **Infrastructure** depends on Domain and Application
+- **Presentation** depends on Application (and uses Infrastructure for DI wiring)
+
+Never import from an outer layer into an inner layer.
+
+## SOLID and DRY Principles
+
+### Single Responsibility Principle (SRP)
+
+Each module has one reason to change:
+- Routers handle HTTP concerns only
+- Use cases handle business orchestration only
+- Repositories handle data access only
+- Schemas handle serialization/validation only
+
+### Open/Closed Principle (OCP)
+
+Extend behavior through new use cases or repository implementations rather than modifying existing ones. Use protocol classes or ABCs to define extension points.
+
+### Liskov Substitution Principle (LSP)
+
+All repository implementations must fully satisfy their abstract interface contract. Any implementation must be substitutable for the interface without altering correctness.
+
+### Interface Segregation Principle (ISP)
+
+Define focused repository interfaces. If a consumer only needs read operations, provide a read-only interface rather than a full CRUD interface.
+
+```python
+class CandidateReader(ABC):
+    @abstractmethod
+    async def find_by_id(self, candidate_id: int) -> Candidate | None: ...
+
+class CandidateWriter(ABC):
+    @abstractmethod
+    async def save(self, candidate: Candidate) -> Candidate: ...
+
+class CandidateRepository(CandidateReader, CandidateWriter, ABC):
+    pass
+```
+
+### Dependency Inversion Principle (DIP)
+
+Use cases depend on abstract repository interfaces, not concrete SQLAlchemy implementations. FastAPI's `Depends` wires concrete implementations at the presentation layer.
+
+```python
+# In presentation/dependencies.py
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.infrastructure.database.session import get_session
+from src.infrastructure.database.repositories.candidate_repo import SqlAlchemyCandidateRepository
+from src.application.use_cases.create_candidate import CreateCandidateUseCase
+
+
+def get_candidate_repo(session: AsyncSession = Depends(get_session)) -> SqlAlchemyCandidateRepository:
+    return SqlAlchemyCandidateRepository(session)
+
+
+def get_create_candidate_use_case(
+    repo: SqlAlchemyCandidateRepository = Depends(get_candidate_repo),
+) -> CreateCandidateUseCase:
+    return CreateCandidateUseCase(repo)
+```
+
+### DRY (Don't Repeat Yourself)
+
+- Centralize common validation in Pydantic validators
+- Use base classes for shared repository logic
+- Extract common query patterns into reusable methods
+- Use FastAPI dependencies to avoid repeating auth/session boilerplate
+
+## Coding Standards
+
+### Language and Naming Conventions
+
+All code, comments, error messages, log messages, and documentation must be in English.
+
+- **Variables and functions**: `snake_case` (e.g., `candidate_id`, `find_by_email`)
+- **Classes**: `PascalCase` (e.g., `Candidate`, `CandidateRepository`)
+- **Constants**: `UPPER_SNAKE_CASE` (e.g., `MAX_PAGE_SIZE`, `DEFAULT_TIMEOUT`)
+- **Modules and files**: `snake_case` (e.g., `candidate_service.py`, `create_candidate.py`)
+- **Private members**: Single underscore prefix (e.g., `_candidate_repo`)
+
+### Python and Type Hints
+
+- **Type all function signatures**: Parameters and return types must have type annotations
+- **Use modern syntax**: `list[str]` instead of `List[str]`, `str | None` instead of `Optional[str]`
+- **Pydantic models** for all external data boundaries (API input/output)
+- **dataclasses** for domain entities
+- **Avoid `Any`**: Use `Unknown` or specific types
+
+```python
+async def find_candidate_by_id(candidate_id: int) -> Candidate | None:
+    ...
+```
+
+### Error Handling
+
+Define domain-specific exceptions. Map them to HTTP responses in exception handlers.
+
+```python
+# domain/exceptions.py
+class DomainError(Exception):
+    pass
+
+class NotFoundError(DomainError):
+    def __init__(self, entity: str, identifier: str | int) -> None:
+        super().__init__(f"{entity} not found: {identifier}")
+        self.entity = entity
+        self.identifier = identifier
+
+class ValidationError(DomainError):
+    pass
+
+class ConflictError(DomainError):
+    pass
+```
+
+```python
+# presentation/middleware.py
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from src.domain.exceptions import NotFoundError, ValidationError, ConflictError
+
+
+async def domain_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    if isinstance(exc, NotFoundError):
+        return JSONResponse(status_code=404, content={"error": {"message": str(exc), "code": "NOT_FOUND"}})
+    if isinstance(exc, ValidationError):
+        return JSONResponse(status_code=400, content={"error": {"message": str(exc), "code": "VALIDATION_ERROR"}})
+    if isinstance(exc, ConflictError):
+        return JSONResponse(status_code=409, content={"error": {"message": str(exc), "code": "CONFLICT"}})
+    return JSONResponse(status_code=500, content={"error": {"message": "Internal server error", "code": "INTERNAL_ERROR"}})
+```
+
+### Validation Patterns
+
+Use Pydantic schemas for all request validation. Validation happens automatically at the presentation layer.
+
+```python
+from pydantic import BaseModel, EmailStr, Field
+
+
+class CreateCandidateRequest(BaseModel):
+    first_name: str = Field(..., min_length=1, max_length=100)
+    last_name: str = Field(..., min_length=1, max_length=100)
+    email: EmailStr
+
+    model_config = {"strict": True}
+```
+
+### Logging Standards
+
+Use Python's built-in `logging` module with structured context.
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+logger.info("Candidate created", extra={"candidate_id": candidate.id})
+logger.error("Failed to create candidate", extra={"error": str(e)}, exc_info=True)
+```
+
+- Use `__name__` for logger names
+- Use appropriate log levels: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
+- Include relevant context via `extra` dict
+- Use `exc_info=True` for exception logging
+
+## API Design Standards
+
+### REST Endpoints
+
+Follow RESTful conventions with resource-based URLs:
+
+```
+GET    /api/v1/candidates          # List candidates
+GET    /api/v1/candidates/{id}     # Get candidate by ID
+POST   /api/v1/candidates          # Create candidate
+PUT    /api/v1/candidates/{id}     # Full update
+PATCH  /api/v1/candidates/{id}     # Partial update
+DELETE /api/v1/candidates/{id}     # Delete candidate
+```
+
+### Request/Response Patterns
+
+Use Pydantic schemas for all request and response models. FastAPI generates OpenAPI docs automatically.
+
+```python
+from fastapi import APIRouter, Depends, status
+from src.presentation.schemas.candidate import CreateCandidateRequest, CandidateResponse
+
+router = APIRouter(prefix="/api/v1/candidates", tags=["candidates"])
+
+@router.post("/", response_model=CandidateResponse, status_code=status.HTTP_201_CREATED)
+async def create_candidate(
+    request: CreateCandidateRequest,
+    use_case: CreateCandidateUseCase = Depends(get_create_candidate_use_case),
+) -> CandidateResponse:
+    candidate = await use_case.execute(request.to_entity())
+    return CandidateResponse.from_entity(candidate)
+```
+
+### Error Response Format
+
+All errors follow a consistent JSON structure:
+
+```json
+{
+    "error": {
+        "message": "Candidate not found: 42",
+        "code": "NOT_FOUND",
+        "details": []
+    }
+}
+```
+
+Standard HTTP status code mappings:
+- `400` - Validation errors, bad request
+- `401` - Unauthorized (missing/invalid token)
+- `403` - Forbidden (insufficient permissions)
+- `404` - Resource not found
+- `409` - Conflict (duplicate resource)
+- `422` - Unprocessable entity (Pydantic validation)
+- `500` - Internal server error
+
+### Versioning
+
+Use path-based versioning: `/api/v1/...`, `/api/v2/...`
+
+Mount versioned routers in the app factory:
+
+```python
+from src.presentation.routers import v1_router, v2_router
+
+app.include_router(v1_router, prefix="/api/v1")
+app.include_router(v2_router, prefix="/api/v2")
+```
+
+### CORS Configuration
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.FRONTEND_URL],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+## Database Patterns
+
+### SQLAlchemy Models
+
+Use SQLAlchemy 2.0 declarative style with mapped columns:
+
+```python
+from sqlalchemy import String, Integer
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class CandidateModel(Base):
+    __tablename__ = "candidates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    first_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+```
+
+### Migrations
+
+Use Alembic for all schema changes. Never modify the database manually.
+
+```bash
+# Create a new migration
+alembic revision --autogenerate -m "add_candidates_table"
+
+# Apply migrations
+alembic upgrade head
+
+# Rollback one step
+alembic downgrade -1
+```
+
+- Always review auto-generated migrations before applying
+- Use descriptive migration names in snake_case
+- Test migrations in both directions (upgrade and downgrade)
+- Commit migration files to version control
+
+### Repository Pattern
+
+Infrastructure repositories implement domain interfaces using SQLAlchemy:
+
+```python
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.domain.entities.candidate import Candidate
+from src.domain.repositories.candidate_repository import CandidateRepository
+from src.infrastructure.database.models.candidate import CandidateModel
+
+
+class SqlAlchemyCandidateRepository(CandidateRepository):
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def find_by_id(self, candidate_id: int) -> Candidate | None:
+        result = await self._session.get(CandidateModel, candidate_id)
+        return self._to_entity(result) if result else None
+
+    async def save(self, candidate: Candidate) -> Candidate:
+        model = self._to_model(candidate)
+        self._session.add(model)
+        await self._session.flush()
+        return self._to_entity(model)
+
+    def _to_entity(self, model: CandidateModel) -> Candidate:
+        return Candidate(
+            id=model.id,
+            first_name=model.first_name,
+            last_name=model.last_name,
+            email=model.email,
+        )
+
+    def _to_model(self, entity: Candidate) -> CandidateModel:
+        return CandidateModel(
+            id=entity.id,
+            first_name=entity.first_name,
+            last_name=entity.last_name,
+            email=entity.email,
+        )
+```
+
+## Testing Standards
+
+### Test File Structure
+- Place tests in `tests/unit/` and `tests/integration/` directories
+- Mirror source structure: `tests/unit/application/use_cases/test_create_candidate.py`
+- Use `conftest.py` for shared fixtures
+- Use factory functions for test data
+
+### Test Organization Pattern
+
+```python
+import pytest
+from unittest.mock import AsyncMock
+from src.application.use_cases.create_candidate import CreateCandidateUseCase
+from src.domain.entities.candidate import Candidate
+
+
+class TestCreateCandidateUseCase:
+    """Tests for CreateCandidateUseCase.execute"""
+
+    @pytest.fixture
+    def mock_repo(self) -> AsyncMock:
+        return AsyncMock()
+
+    @pytest.fixture
+    def use_case(self, mock_repo: AsyncMock) -> CreateCandidateUseCase:
+        return CreateCandidateUseCase(mock_repo)
+
+    async def test_should_create_candidate_when_email_is_unique(
+        self, use_case: CreateCandidateUseCase, mock_repo: AsyncMock
+    ) -> None:
+        # Arrange
+        candidate = Candidate(first_name="John", last_name="Doe", email="john@example.com")
+        mock_repo.find_by_email.return_value = None
+        mock_repo.save.return_value = Candidate(id=1, first_name="John", last_name="Doe", email="john@example.com")
+
+        # Act
+        result = await use_case.execute(candidate)
+
+        # Assert
+        assert result.id == 1
+        mock_repo.save.assert_called_once()
+
+    async def test_should_raise_error_when_email_already_exists(
+        self, use_case: CreateCandidateUseCase, mock_repo: AsyncMock
+    ) -> None:
+        # Arrange
+        candidate = Candidate(first_name="John", last_name="Doe", email="john@example.com")
+        mock_repo.find_by_email.return_value = candidate
+
+        # Act & Assert
+        with pytest.raises(ValueError, match="already exists"):
+            await use_case.execute(candidate)
+```
+
+### Test Case Naming Convention
+- Use descriptive names: `test_should_[expected_behavior]_when_[condition]`
+- Group related tests in classes: `TestCreateCandidateUseCase`
+- Use `snake_case` for all test names
+
+### Test Structure (AAA Pattern)
+Always follow Arrange-Act-Assert:
+- **Arrange**: Set up test data, mocks, and fixtures
+- **Act**: Execute the function under test
+- **Assert**: Verify expected behavior
+
+### Mocking Standards
+- Use `unittest.mock.AsyncMock` for async dependencies
+- Use `unittest.mock.MagicMock` for sync dependencies
+- Mock at the boundary (repository interfaces, not SQLAlchemy internals)
+- Use `pytest.fixture` for mock setup
+- Each test should set up its own mock expectations
+
+### Test Coverage Requirements
+
+Include these categories for each function:
+1. **Happy path**: Valid inputs producing expected outputs
+2. **Error handling**: Invalid inputs, missing data, database errors
+3. **Edge cases**: Boundary values, None inputs, empty collections
+4. **Validation**: Input validation, business rule enforcement
+
+- **Threshold**: 90% for branches, functions, lines, and statements
+- **Coverage reports**: Generate with `pytest --cov=src --cov-report=html`
+
+### Async Testing
+- Use `pytest-asyncio` with `@pytest.mark.asyncio` or `mode = "auto"` in config
+- Use `AsyncMock` for async repository mocks
+- Test both successful and failed async operations
+
+## Performance Best Practices
+
+### Database Query Optimization
+- Use `selectinload` or `joinedload` to avoid N+1 queries
+- Select only needed columns with `select(Model.col1, Model.col2)`
+- Use database indexes for frequently queried fields
+- Use pagination for list endpoints
+
+```python
+from sqlalchemy.orm import selectinload
+
+stmt = select(CandidateModel).options(selectinload(CandidateModel.applications)).where(CandidateModel.id == candidate_id)
+```
+
+### Async Patterns
+- Use `async/await` throughout the stack (routers, use cases, repositories)
+- Use `asyncio.gather()` for independent parallel operations
+- Use async SQLAlchemy sessions (`AsyncSession`)
+
+### Error Handling Performance
+- Return early to avoid unnecessary processing
+- Let exceptions propagate naturally; handle them at the presentation layer
+- Avoid catching and re-raising without adding value
+
+## Security Best Practices
+
+### Input Validation
+- Validate all inputs via Pydantic schemas at the API boundary
+- Use `EmailStr`, `Field(min_length=...)`, and custom validators
+- Never trust client input in queries; use parameterized SQLAlchemy queries
+
+### Authentication (OAuth)
+
+- Use OAuth 2.0 for authentication
+- Implement token validation as a FastAPI dependency
+- Protect routes with `Depends(get_current_user)`
+- Store tokens securely; never log tokens or secrets
+
+```python
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
+
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+    user = await validate_token(token)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    return user
+```
+
+### Environment Variables
+- Use Pydantic `BaseSettings` for configuration
+- Never commit `.env` files to version control
+- Validate required variables at startup
+
+```python
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    DATABASE_URL: str
+    OAUTH_CLIENT_ID: str
+    OAUTH_CLIENT_SECRET: str
+    FRONTEND_URL: str = "http://localhost:3000"
+
+    model_config = {"env_file": ".env"}
+```
+
+### Dependency Injection
+- Use FastAPI `Depends` for all dependency injection
+- Inject database sessions, repositories, and use cases
+- Never use global mutable state for database connections
+
+## Development Workflow
+
+### Git Workflow
+- Develop features in separate branches with `-backend` suffix
+- Write descriptive commit messages in English
+- Code review before merging
+- Keep branches small and focused
+
+### Development Scripts
+
+```bash
+# Local development
+uvicorn src.main:app --reload --port 8000
+
+# Run tests
+pytest
+
+# Run tests with coverage
+pytest --cov=src --cov-report=html
+
+# Linting and formatting
+ruff check src/ tests/
+ruff format src/ tests/
+
+# Type checking
+mypy src/
+
+# Database migrations
+alembic revision --autogenerate -m "migration_name"
+alembic upgrade head
+```
+
+### Code Quality
+- Run `ruff check` and `ruff format` before commits
+- Run `mypy` for type checking
+- All tests must pass before merging
+- Review code for adherence to Clean Architecture boundaries
+
+## Docker Deployment
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY pyproject.toml .
+RUN pip install --no-cache-dir .
+COPY src/ src/
+COPY alembic/ alembic/
+COPY alembic.ini .
+
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+Use `docker-compose.yml` for local development with PostgreSQL:
+
+```yaml
+services:
+  api:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:pass@db:5432/app
+    depends_on:
+      - db
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: app
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+```
+
+## Definition of Done (Backend)
+
+A backend change is complete when:
+- [ ] All new code has type annotations
+- [ ] Unit tests cover happy path, error cases, and edge cases
+- [ ] Test coverage meets 90% threshold
+- [ ] Pydantic schemas validate all API inputs
+- [ ] Domain exceptions map to correct HTTP status codes
+- [ ] Alembic migration created if schema changed
+- [ ] `ruff check` and `mypy` pass with no errors
+- [ ] API documentation (OpenAPI) reflects the changes
+- [ ] No Clean Architecture boundary violations (inner layers don't import outer)

@@ -1,0 +1,680 @@
+---
+description: Frontend development standards, best practices, and conventions for the React application including component patterns, state management, UI/UX guidelines, and testing practices
+globs: ["frontend/src/**/*.{ts,tsx}", "frontend/cypress/**/*.{ts,js}", "frontend/tsconfig.json", "frontend/cypress.config.ts", "frontend/package.json", "frontend/vite.config.ts"]
+alwaysApply: true
+---
+
+# Frontend Project Configuration and Best Practices
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Technology Stack](#technology-stack)
+  - [Core Technologies](#core-technologies)
+  - [UI Framework](#ui-framework)
+  - [State Management & Data Flow](#state-management--data-flow)
+  - [Testing Framework](#testing-framework)
+  - [Development Tools](#development-tools)
+- [Project Structure](#project-structure)
+- [Coding Standards](#coding-standards)
+  - [Language and Naming Conventions](#language-and-naming-conventions)
+  - [Component Conventions](#component-conventions)
+  - [State Management](#state-management)
+  - [Service Layer Architecture](#service-layer-architecture)
+- [UI/UX Standards](#uiux-standards)
+  - [Bootstrap Integration](#bootstrap-integration)
+  - [Form Handling](#form-handling)
+  - [Navigation Patterns](#navigation-patterns)
+  - [Accessibility](#accessibility)
+- [Testing Standards](#testing-standards)
+  - [End-to-End Testing with Cypress](#end-to-end-testing-with-cypress)
+  - [Test Organization](#test-organization)
+- [Configuration Standards](#configuration-standards)
+  - [TypeScript Configuration](#typescript-configuration)
+  - [ESLint Configuration](#eslint-configuration)
+  - [Environment Configuration](#environment-configuration)
+- [Performance Best Practices](#performance-best-practices)
+  - [Component Optimization](#component-optimization)
+  - [Bundle Optimization](#bundle-optimization)
+  - [API Efficiency](#api-efficiency)
+- [Development Workflow](#development-workflow)
+  - [Git Workflow](#git-workflow)
+  - [Development Scripts](#development-scripts)
+  - [Code Quality](#code-quality)
+- [Migration Strategy](#migration-strategy)
+  - [TypeScript Migration](#typescript-migration)
+  - [Component Modernization](#component-modernization)
+
+---
+
+## Overview
+
+This document defines the standards and conventions for the frontend application. The frontend uses React with TypeScript, Redux Toolkit for state management, React Bootstrap for UI components, React Router for navigation, and Vite as the build tool.
+
+## Technology Stack
+
+### Core Technologies
+- **React 18+**: Modern React with functional components and hooks
+- **TypeScript 5+**: Strict type safety across the entire codebase
+- **Vite**: Fast build tooling with HMR and optimized production builds
+- **React Router DOM 6+**: Client-side routing and navigation
+
+### UI Framework
+- **Bootstrap 5**: CSS framework for responsive design
+- **React Bootstrap**: Bootstrap components for React
+- **React Bootstrap Icons**: Icon library
+
+### State Management & Data Flow
+- **Redux Toolkit**: Centralized state management with slices, thunks, and RTK Query
+- **React Hooks**: useState, useEffect for local component state
+- **RTK Query**: Data fetching and caching (preferred over raw fetch/axios)
+
+### Testing Framework
+- **Cypress**: End-to-end testing
+- **Vitest**: Unit testing (Vite-native test runner)
+- **React Testing Library**: Component testing utilities
+
+### Development Tools
+- **ESLint**: Code linting with React and TypeScript rules
+- **TypeScript**: Static type checking with strict mode
+- **Vite**: Development server with hot module replacement
+
+## Project Structure
+
+```
+frontend/
+├── public/                 # Static assets
+├── src/
+│   ├── app/               # App-level setup
+│   │   ├── store.ts       # Redux store configuration
+│   │   └── hooks.ts       # Typed Redux hooks (useAppDispatch, useAppSelector)
+│   ├── components/        # Reusable UI components
+│   ├── features/          # Feature-based modules
+│   │   └── candidates/
+│   │       ├── candidatesSlice.ts   # Redux slice
+│   │       ├── candidatesApi.ts     # RTK Query API (if used)
+│   │       ├── CandidateList.tsx    # Feature components
+│   │       └── types.ts            # Feature-specific types
+│   ├── pages/             # Page/route components
+│   ├── services/          # API service layer (if not using RTK Query)
+│   ├── types/             # Shared TypeScript types
+│   ├── assets/            # Images, fonts, static resources
+│   ├── App.tsx            # Main application component
+│   ├── main.tsx           # Application entry point
+│   └── index.css          # Global styles
+├── cypress/
+│   └── e2e/               # End-to-end test files
+├── package.json           # Dependencies and scripts
+├── tsconfig.json          # TypeScript configuration
+├── vite.config.ts         # Vite configuration
+├── cypress.config.ts      # Cypress configuration
+└── .eslintrc.cjs          # ESLint configuration
+```
+
+## Coding Standards
+
+### Language and Naming Conventions
+
+All code, comments, error messages, log messages, and documentation must be in English.
+
+- **Component Naming**: PascalCase for React components (e.g., `CandidateCard`, `PositionDetails`)
+- **Variable Naming**: camelCase for variables and functions (e.g., `candidateId`, `handleSubmit`)
+- **Constants Naming**: UPPER_SNAKE_CASE for constants (e.g., `MAX_CANDIDATES_PER_PAGE`, `API_BASE_URL`)
+- **Type/Interface Naming**: PascalCase for types and interfaces (e.g., `CandidateData`, `PositionProps`)
+- **File Naming**: PascalCase for component files (e.g., `CandidateCard.tsx`), camelCase for utility and slice files (e.g., `candidatesSlice.ts`, `apiUtils.ts`)
+- **CSS Class Naming**: kebab-case for CSS classes (e.g., `candidate-card`, `position-details`)
+- **Hook Naming**: camelCase starting with "use" prefix (e.g., `useCandidate`, `useAppDispatch`)
+- **Slice Naming**: camelCase with "Slice" suffix (e.g., `candidatesSlice`, `positionsSlice`)
+
+```typescript
+// Good: All in English with proper conventions
+import React, { useState } from 'react';
+import { useAppSelector, useAppDispatch } from '../../app/hooks';
+
+type CandidateCardProps = {
+    candidate: Candidate;
+    index: number;
+    onClick: (candidate: Candidate) => void;
+};
+
+const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, index, onClick }) => {
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleCardClick = () => {
+        onClick(candidate);
+    };
+
+    return (
+        <div className="candidate-card" onClick={handleCardClick}>
+            {/* Component JSX */}
+        </div>
+    );
+};
+```
+
+**Error Messages and Console Logs:**
+
+```typescript
+// Good: English error messages
+catch (error) {
+    console.error('Failed to fetch candidates:', error);
+    setError('Unable to load candidates. Please try again later.');
+}
+```
+
+### Component Conventions
+
+#### Functional Components
+- **Always use functional components** with hooks
+- **All components must be TypeScript** (.tsx files)
+- Use **explicit return types** for components
+
+```typescript
+import React, { useState, useEffect } from 'react';
+
+type Position = {
+    id: number;
+    title: string;
+    status: 'Open' | 'Closed' | 'Draft';
+};
+
+const Positions: React.FC = () => {
+    const [positions, setPositions] = useState<Position[]>([]);
+    // Component logic
+};
+```
+
+#### Component Props
+- **Define TypeScript types** for all component props
+- Use **destructuring** for props
+- Include **default values** where appropriate
+
+```typescript
+type CandidateCardProps = {
+    candidate: Candidate;
+    index: number;
+    onClick: (candidate: Candidate) => void;
+};
+
+const CandidateCard: React.FC<CandidateCardProps> = ({ candidate, index, onClick }) => {
+    // Component implementation
+};
+```
+
+### State Management
+
+#### Redux Toolkit Store Setup
+
+Configure the store with typed hooks for consistent usage across the application.
+
+```typescript
+// app/store.ts
+import { configureStore } from '@reduxjs/toolkit';
+import candidatesReducer from '../features/candidates/candidatesSlice';
+import positionsReducer from '../features/positions/positionsSlice';
+
+export const store = configureStore({
+    reducer: {
+        candidates: candidatesReducer,
+        positions: positionsReducer,
+    },
+});
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+```
+
+```typescript
+// app/hooks.ts
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState, AppDispatch } from './store';
+
+export const useAppDispatch = useDispatch.withTypes<AppDispatch>();
+export const useAppSelector = useSelector.withTypes<RootState>();
+```
+
+#### Redux Slices
+
+Use `createSlice` for all Redux state. Use `createAsyncThunk` for async operations.
+
+```typescript
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+
+type CandidatesState = {
+    items: Candidate[];
+    status: 'idle' | 'loading' | 'succeeded' | 'failed';
+    error: string | null;
+};
+
+const initialState: CandidatesState = {
+    items: [],
+    status: 'idle',
+    error: null,
+};
+
+export const fetchCandidates = createAsyncThunk(
+    'candidates/fetchCandidates',
+    async () => {
+        const response = await fetch(`${API_BASE_URL}/candidates`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch candidates');
+        }
+        return response.json() as Promise<Candidate[]>;
+    }
+);
+
+const candidatesSlice = createSlice({
+    name: 'candidates',
+    initialState,
+    reducers: {
+        candidateAdded(state, action: PayloadAction<Candidate>) {
+            state.items.push(action.payload);
+        },
+    },
+    extraReducers: (builder) => {
+        builder
+            .addCase(fetchCandidates.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(fetchCandidates.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.items = action.payload;
+            })
+            .addCase(fetchCandidates.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.error.message ?? 'Unknown error';
+            });
+    },
+});
+
+export const { candidateAdded } = candidatesSlice.actions;
+export default candidatesSlice.reducer;
+```
+
+#### Local State vs Redux State
+
+- **Redux**: Shared/global state, server-fetched data, state needed across routes
+- **Local (useState)**: Form inputs, UI toggles, component-specific transient state
+
+#### Loading and Error States
+- **Always handle loading states** for async operations
+- **Use Redux slice status** fields (`'idle' | 'loading' | 'succeeded' | 'failed'`)
+- **Use React Bootstrap Alert** components for user feedback
+
+```typescript
+const CandidateList: React.FC = () => {
+    const dispatch = useAppDispatch();
+    const { items, status, error } = useAppSelector((state) => state.candidates);
+
+    useEffect(() => {
+        if (status === 'idle') {
+            dispatch(fetchCandidates());
+        }
+    }, [status, dispatch]);
+
+    if (status === 'loading') return <Spinner animation="border" />;
+    if (status === 'failed') return <Alert variant="danger">{error}</Alert>;
+
+    return (
+        <ul>
+            {items.map((candidate) => (
+                <li key={candidate.id}>{candidate.name}</li>
+            ))}
+        </ul>
+    );
+};
+```
+
+### Service Layer Architecture
+
+#### API Services (when not using RTK Query)
+- **Centralize API calls** in service files
+- **Export service objects** with grouped methods
+- **Handle errors at service level** when appropriate
+- **Type all request and response data**
+
+```typescript
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+
+export const positionService = {
+    getAllPositions: async (): Promise<Position[]> => {
+        const response = await fetch(`${API_BASE_URL}/api/v1/positions`);
+        if (!response.ok) {
+            throw new Error('Error fetching positions');
+        }
+        return response.json();
+    },
+
+    updatePosition: async (id: number, data: UpdatePositionRequest): Promise<Position> => {
+        const response = await fetch(`${API_BASE_URL}/api/v1/positions/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            throw new Error('Error updating position');
+        }
+        return response.json();
+    },
+};
+```
+
+#### RTK Query (preferred for data fetching)
+
+```typescript
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+
+export const candidatesApi = createApi({
+    reducerPath: 'candidatesApi',
+    baseQuery: fetchBaseQuery({ baseUrl: import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api/v1' }),
+    tagTypes: ['Candidate'],
+    endpoints: (builder) => ({
+        getCandidates: builder.query<Candidate[], void>({
+            query: () => '/candidates',
+            providesTags: ['Candidate'],
+        }),
+        createCandidate: builder.mutation<Candidate, CreateCandidateRequest>({
+            query: (body) => ({ url: '/candidates', method: 'POST', body }),
+            invalidatesTags: ['Candidate'],
+        }),
+    }),
+});
+
+export const { useGetCandidatesQuery, useCreateCandidateMutation } = candidatesApi;
+```
+
+## UI/UX Standards
+
+### Bootstrap Integration
+- Use **React Bootstrap components** instead of plain Bootstrap HTML
+- **Import Bootstrap CSS** in the main entry point
+- Follow **Bootstrap responsive grid system** (Container, Row, Col)
+
+```typescript
+import { Container, Row, Col, Card, Button, Form, Alert, Spinner } from 'react-bootstrap';
+```
+
+### Form Handling
+- Use **controlled components** for form inputs
+- Implement **real-time validation** where appropriate
+- **Disable submit buttons** during form submission
+- **Clear form state** after successful submission
+
+```tsx
+<Form onSubmit={handleSubmit}>
+    <Form.Group className="mb-3">
+        <Form.Label>Title *</Form.Label>
+        <Form.Control
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleInputChange}
+            required
+        />
+    </Form.Group>
+    <Button type="submit" disabled={saving}>
+        {saving ? 'Saving...' : 'Save'}
+    </Button>
+</Form>
+```
+
+### Navigation Patterns
+- Use **React Router** for all navigation
+- **Implement breadcrumbs** with back navigation
+- Use **programmatic navigation** with useNavigate hook
+- Define routes centrally in a routes configuration
+
+```typescript
+import { useNavigate } from 'react-router-dom';
+
+const navigate = useNavigate();
+
+<Button variant="link" onClick={() => navigate('/')}>
+    Back to Dashboard
+</Button>
+```
+
+### Accessibility
+- Include **aria-label** attributes for interactive elements
+- Use **semantic HTML** elements
+- Ensure **keyboard navigation** support
+- Provide **alternative text** for images
+
+```tsx
+<Form.Control
+    type="text"
+    placeholder="Search by title"
+    aria-label="Search positions by title"
+/>
+```
+
+## Testing Standards
+
+### End-to-End Testing with Cypress
+- **Test user workflows** rather than implementation details
+- Use **data-testid** attributes for reliable element selection
+- **Organize tests by feature** (e.g., `candidates.cy.ts`, `positions.cy.ts`)
+- **Include API testing** alongside UI testing
+
+```typescript
+describe('Positions API - Update', () => {
+    beforeEach(() => {
+        cy.window().then((win) => {
+            win.localStorage.clear();
+        });
+    });
+
+    it('should update a position successfully', () => {
+        const updateData = {
+            title: 'Updated Test Position',
+            status: 'Open',
+        };
+
+        cy.request({
+            method: 'PUT',
+            url: `${API_URL}/positions/${testPositionId}`,
+            body: updateData,
+        }).then((response) => {
+            expect(response.status).to.eq(200);
+            expect(response.body.data.title).to.eq(updateData.title);
+        });
+    });
+});
+```
+
+### Test Organization
+- **Group related tests** with describe blocks
+- **Use descriptive test names** that explain the expected behavior
+- **Test both success and error scenarios**
+- **Include edge cases** and validation testing
+- Use **Vitest** for unit tests of slices, hooks, and utilities
+
+```typescript
+// Example Vitest unit test for a Redux slice
+import { describe, it, expect } from 'vitest';
+import candidatesReducer, { candidateAdded } from './candidatesSlice';
+
+describe('candidatesSlice', () => {
+    it('should add a candidate to the list', () => {
+        const initialState = { items: [], status: 'idle' as const, error: null };
+        const candidate = { id: 1, name: 'John Doe', email: 'john@example.com' };
+
+        const state = candidatesReducer(initialState, candidateAdded(candidate));
+
+        expect(state.items).toHaveLength(1);
+        expect(state.items[0]).toEqual(candidate);
+    });
+});
+```
+
+## Configuration Standards
+
+### TypeScript Configuration
+- Enable **strict mode** for type checking
+- Use **path mapping** with "@/" for cleaner imports
+- Configure for **Vite** with appropriate module resolution
+
+```json
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "strict": true,
+        "jsx": "react-jsx",
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/*"]
+        },
+        "types": ["vite/client"]
+    },
+    "include": ["src"]
+}
+```
+
+### ESLint Configuration
+- Extend **eslint:recommended** and **typescript-eslint** rules
+- Include **React hooks** rules
+- Enforce **consistent code style** across the project
+
+```javascript
+module.exports = {
+    root: true,
+    env: { browser: true, es2020: true },
+    extends: [
+        'eslint:recommended',
+        'plugin:@typescript-eslint/recommended',
+        'plugin:react-hooks/recommended',
+    ],
+    parser: '@typescript-eslint/parser',
+    plugins: ['react-refresh'],
+    rules: {
+        'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    },
+};
+```
+
+### Environment Configuration
+- Use **Vite environment variables** prefixed with `VITE_`
+- **Separate configurations** for development and production
+- **Configure Cypress** with environment-specific settings
+- Access env vars via `import.meta.env.VITE_*`
+
+```typescript
+// vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig({
+    plugins: [react()],
+    resolve: {
+        alias: {
+            '@': path.resolve(__dirname, './src'),
+        },
+    },
+    server: {
+        port: 3000,
+    },
+});
+```
+
+```typescript
+// cypress.config.ts
+import { defineConfig } from 'cypress';
+
+export default defineConfig({
+    e2e: {
+        baseUrl: 'http://localhost:3000',
+        env: {
+            API_URL: 'http://localhost:8000',
+        },
+    },
+});
+```
+
+## Performance Best Practices
+
+### Component Optimization
+- **Lazy load** route-level components with `React.lazy` and `Suspense`
+- **Memoize expensive calculations** with `useMemo`
+- **Stabilize callback references** with `useCallback`
+- **Extract reusable logic** into custom hooks
+- **Use Redux selectors** to minimize unnecessary re-renders
+
+```typescript
+import React, { lazy, Suspense } from 'react';
+import { Spinner } from 'react-bootstrap';
+
+const CandidateDetails = lazy(() => import('./pages/CandidateDetails'));
+
+<Suspense fallback={<Spinner animation="border" />}>
+    <CandidateDetails />
+</Suspense>
+```
+
+### Bundle Optimization
+- **Tree shaking** enabled through Vite
+- **Code splitting** at route level with dynamic imports
+- **Optimize images** and static assets
+- **Analyze bundle size** with `vite-plugin-visualizer`
+
+### API Efficiency
+- **Use RTK Query** for automatic caching and deduplication
+- **Implement loading states** to improve perceived performance
+- **Use optimistic updates** for mutations where appropriate
+- **Invalidate cache tags** to keep data fresh after mutations
+
+## Development Workflow
+
+### Git Workflow
+- **Feature Branches**: Develop features in separate branches with `-frontend` suffix to avoid conflicts
+- **Descriptive Commits**: Write descriptive commit messages in English
+- **Code Review**: Code review before merging
+- **Small Branches**: Keep branches small and focused
+
+### Development Scripts
+
+```bash
+npm run dev            # Vite development server with HMR
+npm run build          # Production build
+npm run preview        # Preview production build locally
+npm run test           # Run Vitest unit tests
+npm run lint           # Run ESLint
+npm run cypress:open   # Open Cypress test runner
+npm run cypress:run    # Run Cypress tests headlessly
+```
+
+### Code Quality
+- **ESLint validation** before commits
+- **TypeScript compilation** without errors (`tsc --noEmit`)
+- **All tests passing** before deployment
+- **No `any` types** unless explicitly justified
+
+## Migration Strategy
+
+### TypeScript Migration
+- **All new code must be TypeScript** — no new `.js` or `.jsx` files
+- **Migrate existing JavaScript** files incrementally during refactors
+- **Enable strict mode** from the start for new files
+
+### Component Modernization
+- **Functional components** over class components
+- **Hooks** instead of lifecycle methods
+- **Redux Toolkit slices** instead of manual action creators and reducers
+- **React Bootstrap** components for UI consistency
+- **Responsive design** principles throughout
+
+## Definition of Done (Frontend)
+
+A frontend change is complete when:
+- [ ] All new code is TypeScript with proper type annotations
+- [ ] Redux state changes use Redux Toolkit slices
+- [ ] Components use React Bootstrap for UI consistency
+- [ ] Cypress E2E tests cover critical user workflows
+- [ ] Unit tests cover slice reducers and utility functions
+- [ ] ESLint passes with no errors
+- [ ] TypeScript compiles with no errors (`tsc --noEmit`)
+- [ ] Loading and error states are handled for all async operations
+- [ ] Accessibility attributes are present on interactive elements
+- [ ] No Clean Architecture boundary violations in feature modules
